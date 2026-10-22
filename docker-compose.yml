@@ -1,0 +1,67 @@
+version: "3.9"
+
+services:
+
+  db:
+    image: mysql:8.0
+    container_name: trilha_ia_db
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - trilha_net
+
+  phpmyadmin:
+    image: phpmyadmin:latest
+    container_name: trilha_ia_phpmyadmin
+    restart: always
+    depends_on:
+      - db
+    environment:
+      PMA_HOST: db
+      PMA_PORT: 3306
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+    ports:
+      - "8080:80"
+    networks:
+      - trilha_net
+
+  api:
+    build: .
+    container_name: trilha_ia_api
+    restart: always
+    depends_on:
+      - db
+    env_file:
+      - .env
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./app:/app/app
+    networks:
+      - trilha_net
+
+  php:
+    image: php:8.2-apache
+    container_name: trilha_ia_php
+    restart: always
+    ports:
+      - "8081:80"
+    volumes:
+      - ./php:/var/www/html
+    networks:
+      - trilha_net
+
+volumes:
+  mysql_data:
+
+networks:
+  trilha_net:
+    driver: bridge
