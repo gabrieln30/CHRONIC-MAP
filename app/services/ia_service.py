@@ -16,8 +16,8 @@ from app.schemas import TrilhaIA
 logger = logging.getLogger("chronic_map.ia")
 
 # Configurável por ambiente: os nomes de modelo do Gemini mudam com o tempo.
-GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-flash-latest")
-GEMINI_TIMEOUT = int(os.getenv("GEMINI_TIMEOUT", "60"))
+GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-3.1-flash-lite")
+GEMINI_TIMEOUT = int(os.getenv("GEMINI_TIMEOUT", "120"))
 MAX_TENTATIVAS = 2
 
 T = TypeVar("T", bound=BaseModel)
@@ -33,16 +33,20 @@ def _gerar_texto(prompt: str) -> str:
     if not api_key:
         raise IAServiceError("A IA não está configurada no servidor.")
     try:
-        import google.generativeai as genai  # import tardio: a API sobe mesmo sem o SDK
+        from google import genai  # import tardio: a API sobe mesmo sem o SDK
+        from google.genai import types
     except ImportError as exc:  # pragma: no cover
         raise IAServiceError("SDK do Gemini não instalado no servidor.") from exc
 
-    genai.configure(api_key=api_key)
-    model = genai.GenerativeModel(
-        GEMINI_MODEL,
-        generation_config={"response_mime_type": "application/json", "temperature": 0.4},
+    client = genai.Client(
+        api_key=api_key,
+        http_options=types.HttpOptions(timeout=GEMINI_TIMEOUT * 1000),  # milissegundos
     )
-    resp = model.generate_content(prompt, request_options={"timeout": GEMINI_TIMEOUT})
+    resp = client.models.generate_content(
+        model=GEMINI_MODEL,
+        contents=prompt,
+        config=types.GenerateContentConfig(response_mime_type="application/json"),
+    )
     return resp.text
 
 
