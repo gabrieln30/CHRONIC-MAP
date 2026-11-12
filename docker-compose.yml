@@ -1,7 +1,4 @@
-version: "3.9"
-
 services:
-
   db:
     image: mysql:8.0
     container_name: trilha_ia_db
@@ -12,7 +9,7 @@ services:
       MYSQL_USER: ${MYSQL_USER}
       MYSQL_PASSWORD: ${MYSQL_PASSWORD}
     ports:
-      - "3306:3306"
+      - "3307:3306"
     volumes:
       - mysql_data:/var/lib/mysql
     networks:
@@ -56,6 +53,20 @@ services:
       - "8081:80"
     volumes:
       - ./php:/var/www/html
+    networks:
+      - trilha_net
+
+  web:
+    build:
+      context: ./frontend
+      args:
+        API_PROXY_TARGET: http://api:8000
+    container_name: trilha_ia_web
+    restart: unless-stopped
+    depends_on:
+      - api
+    ports:
+      - "3000:3000"
     networks:
       - trilha_net
 
