@@ -1,5 +1,18 @@
 # README — Como o Sistema Funciona (Arquivo por Arquivo)
 
+
+6. Como o grupo roda depois
+
+powershell
+git clone -b Chronic-Map-FULL-Front https://github.com/gabrieln30/CHRONIC-MAP.git
+cd CHRONIC-MAP
+Copy-Item .env.example .env
+
+Depois preenchem a GEMINI_API_KEY e a SECRET_KEY no .env e rodam docker compose up --build.
+
+Se aparecer qualquer erro em algum passo, cole a mensagem aqui.
+
+
 Este documento explica o papel de cada arquivo e pasta do projeto **Chronic Map**, como eles se comunicam entre si e qual membro da equipe é responsável por cada parte.
 
 ---
