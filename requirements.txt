@@ -1,0 +1,13 @@
+fastapi
+uvicorn[standard]
+sqlalchemy
+pymysql
+psycopg[binary]>=3.2
+alembic
+pydantic
+pydantic-settings
+python-dotenv
+google-genai
+python-jose[cryptography]
+passlib[bcrypt]
+bcrypt==4.0.1
