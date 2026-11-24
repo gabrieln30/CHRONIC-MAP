@@ -267,6 +267,44 @@ def test_prompt_trata_entrada_do_usuario_como_dado():
 
 
 def test_sem_chave_gemini_da_erro_claro(monkeypatch):
+    monkeypatch.setattr(ia_service, "IA_PROVIDER", "gemini")
     monkeypatch.delenv("GEMINI_API_KEY", raising=False)
     with pytest.raises(ia_service.IAServiceError):
         ia_service._gerar_texto("oi")
+
+
+def test_sem_credenciais_aws_da_erro_claro(monkeypatch):
+    from botocore.exceptions import NoCredentialsError
+
+    class ClienteSemCredencial:
+        def converse(self, **kwargs):
+            raise NoCredentialsError()
+
+    monkeypatch.setattr(ia_service, "IA_PROVIDER", "bedrock")
+    monkeypatch.setattr(ia_service, "_get_bedrock", lambda: ClienteSemCredencial())
+    with pytest.raises(ia_service.IAServiceError):
+        ia_service._gerar_texto("oi")
+
+
+def test_bedrock_junta_o_texto_da_resposta(monkeypatch):
+    class ClienteFake:
+        def converse(self, **kwargs):
+            assert kwargs["modelId"]
+            return {"output": {"message": {"content": [{"text": "{\"a\": "}, {"text": "1}"}]}}}
+
+    monkeypatch.setattr(ia_service, "IA_PROVIDER", "bedrock")
+    monkeypatch.setattr(ia_service, "_get_bedrock", lambda: ClienteFake())
+    assert ia_service._gerar_texto("oi") == '{"a": 1}'
+
+
+def test_erro_transitorio_reconhece_throttling_da_aws():
+    from botocore.exceptions import ClientError
+
+    limitado = ClientError({"Error": {"Code": "ThrottlingException", "Message": "x"}}, "Converse")
+    negado = ClientError({"Error": {"Code": "AccessDeniedException", "Message": "x"}}, "Converse")
+    assert ia_service._erro_transitorio(limitado) is True
+    assert ia_service._erro_transitorio(negado) is False
+
+
+def test_extrair_json_ignora_texto_ao_redor():
+    assert ia_service._extrair_json('Claro!\n```json\n{"a": 1}\n```\nPronto.') == {"a": 1}

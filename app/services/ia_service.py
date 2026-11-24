@@ -29,7 +29,7 @@ class IAServiceError(Exception):
     """Falha ao falar com a IA ou resposta inválida. A mensagem é segura para o cliente."""
 
 
-def _gerar_texto(prompt: str) -> str:
+def _gerar_texto_gemini(prompt: str) -> str:
     """Chamada crua ao Gemini. Isolada para poder ser trocada/simulada nos testes."""
     api_key = os.getenv("GEMINI_API_KEY")
     if not api_key:
@@ -52,16 +52,84 @@ def _gerar_texto(prompt: str) -> str:
     return resp.text
 
 
+IA_PROVIDER = os.getenv("IA_PROVIDER", "bedrock")
+BEDROCK_MODEL_ID = os.getenv("BEDROCK_MODEL_ID", "us.anthropic.claude-haiku-4-5-20251001-v1:0")
+AWS_REGION = os.getenv("AWS_REGION", "us-east-1")
+BEDROCK_MAX_TOKENS = int(os.getenv("BEDROCK_MAX_TOKENS", "3000"))
+
+_bedrock_client = None
+
+
+def _get_bedrock():
+    global _bedrock_client
+    if _bedrock_client is None:
+        import boto3
+        from botocore.config import Config
+        _bedrock_client = boto3.client(
+            "bedrock-runtime",
+            region_name=AWS_REGION,
+            config=Config(read_timeout=GEMINI_TIMEOUT, connect_timeout=10, retries={"max_attempts": 1}),
+        )
+    return _bedrock_client
+
+
+def _gerar_texto_bedrock(prompt: str) -> str:
+    if not BEDROCK_MODEL_ID:
+        raise IAServiceError("A IA não está configurada no servidor.")
+    try:
+        from botocore.exceptions import NoCredentialsError, NoRegionError
+    except ImportError as exc:  # pragma: no cover
+        raise IAServiceError("SDK da AWS (boto3) não instalado no servidor.") from exc
+    try:
+        resp = _get_bedrock().converse(
+            modelId=BEDROCK_MODEL_ID,
+            messages=[{"role": "user", "content": [{"text": prompt}]}],
+            inferenceConfig={"maxTokens": BEDROCK_MAX_TOKENS, "temperature": 0.4},
+        )
+    except (NoCredentialsError, NoRegionError) as exc:
+        raise IAServiceError("A IA não está configurada no servidor.") from exc
+
+    uso = resp.get("usage", {})
+    logger.info(
+        "Bedrock tokens: entrada=%s saida=%s total=%s",
+        uso.get("inputTokens"), uso.get("outputTokens"), uso.get("totalTokens"),
+    )
+
+    partes = resp["output"]["message"]["content"]
+    return "".join(p.get("text", "") for p in partes)
+
+
+def _gerar_texto(prompt: str) -> str:
+    if IA_PROVIDER == "bedrock":
+        return _gerar_texto_bedrock(prompt)
+    return _gerar_texto_gemini(prompt)
+
+
 def _extrair_json(texto: str) -> Any:
     """Tira cercas ```json ... ``` e converte para objeto Python."""
-    limpo = texto.strip()
-    limpo = re.sub(r"^```(?:json)?\s*|\s*```$", "", limpo, flags=re.IGNORECASE)
+    limpo = re.sub(r"^```(?:json)?\s*|\s*```$", "", texto.strip(), flags=re.IGNORECASE)
+    ini, fim = limpo.find("{"), limpo.rfind("}")
+    if ini != -1 and fim > ini:
+        limpo = limpo[ini:fim + 1]
     return json.loads(limpo)
 
 
 def _erro_transitorio(exc: Exception) -> bool:
     """Indica erros que costumam melhorar com uma nova tentativa posterior."""
-    return isinstance(exc, TimeoutError) or getattr(exc, "code", None) in {429, 500, 502, 503, 504}
+    if isinstance(exc, TimeoutError):
+        return True
+    try:
+        from botocore.exceptions import ClientError, ConnectTimeoutError, ReadTimeoutError
+        if isinstance(exc, (ReadTimeoutError, ConnectTimeoutError)):
+            return True
+        if isinstance(exc, ClientError):
+            return exc.response["Error"]["Code"] in {
+                "ThrottlingException", "ServiceUnavailableException",
+                "InternalServerException", "ModelTimeoutException",
+            }
+    except ImportError:
+        pass
+    return getattr(exc, "code", None) in {429, 500, 502, 503, 504}
 
 
 def chamar_gemini_json(prompt: str, schema: type[T], gerador: Callable[[str], str] | None = None) -> T:
@@ -89,7 +157,7 @@ def chamar_gemini_json(prompt: str, schema: type[T], gerador: Callable[[str], st
                 logger.warning("Falha temporária do Gemini; nova tentativa em %ss", espera)
                 time.sleep(espera)
 
-    if getattr(ultimo_erro, "code", None) == 503:
+    if _erro_transitorio(ultimo_erro):
         raise IAServiceError("A IA está com alta demanda. Aguarde alguns segundos e tente novamente.") from ultimo_erro
     raise IAServiceError("Não foi possível gerar a resposta da IA agora. Tente novamente.") from ultimo_erro
 
