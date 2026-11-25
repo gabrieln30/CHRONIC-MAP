@@ -2,7 +2,7 @@
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { ArrowLeft, ArrowRight, Check, Sparkles } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, Route } from "lucide-react";
 import { AppPage } from "@/components/AppPage";
 import { Button, Card, Field, Spinner } from "@/components/ui";
 import { useToast } from "@/components/Toast";
@@ -18,10 +18,11 @@ import { tFast } from "@/lib/motion";
  */
 type Passo = "area" | "sub" | "perg" | "resumo" | "gerando";
 
+// A troca de passo responde ao clique da pessoa, entao mantem um deslocamento curto.
 const slide = {
-  initial: { opacity: 0, x: 24 },
+  initial: { opacity: 0, x: 12 },
   animate: { opacity: 1, x: 0, transition: tFast },
-  exit: { opacity: 0, x: -24, transition: { duration: 0.15 } },
+  exit: { opacity: 0, x: -12, transition: { duration: 0.12 } },
 };
 
 export default function DiagnosticoPage() {
@@ -149,14 +150,14 @@ export default function DiagnosticoPage() {
             </Card>
             <p className="mt-4 text-sm text-muted">Estas respostas são enviadas à IA apenas para montar a sua trilha.</p>
             <div className="mt-6 flex justify-end">
-              <Button onClick={gerar}>Gerar minha trilha <Sparkles className="size-4" aria-hidden /></Button>
+              <Button onClick={gerar}><Route className="size-4" aria-hidden /> Gerar minha trilha</Button>
             </div>
           </motion.div>
         )}
 
         {passo === "gerando" && (
           <motion.div key="gerando" {...slide}>
-            <Card className="flex flex-col items-center gap-5 py-14 text-center">
+            <Card className="flex flex-col items-center gap-4 py-14 text-center">
               {erroGerar ? (
                 <>
                   <p className="font-display text-xl font-semibold">Não conseguimos gerar a trilha</p>
@@ -169,7 +170,7 @@ export default function DiagnosticoPage() {
               ) : (
                 <>
                   <GeradorAnimado />
-                  <p className="font-display text-xl font-semibold">A IA está montando sua trilha</p>
+                  <p className="font-display text-xl font-semibold">Montando a sua trilha</p>
                   <p className="text-muted">Isso pode levar alguns segundos.</p>
                 </>
               )}
@@ -194,7 +195,7 @@ function Etapa({ titulo, voltar }: { titulo: string; voltar?: () => void }) {
   );
 }
 
-/** "Pergunta 2 de 5" (RF06) com barra animada. */
+/** "Pergunta 2 de 5" (RF06) com barra de progresso. */
 function Progresso({ n, total }: { n: number; total: number }) {
   return (
     <div className="mb-6" aria-label={`Pergunta ${n} de ${total}`}>
@@ -215,10 +216,10 @@ function Opcoes({
         const ativo = selecionado === String(o.id);
         return (
           <button key={o.id} role="option" aria-selected={ativo} onClick={() => onPick(o.id as never)}
-            className={cn("flex items-center justify-between rounded-[var(--radius-control)] border bg-surface px-5 py-4 text-left font-medium transition-all hover:-translate-y-0.5 hover:border-primary",
-              ativo ? "border-primary ring-4 ring-primary/15" : "border-line")}>
+            className={cn("flex items-center justify-between rounded-[var(--radius-control)] border px-4 py-3.5 text-left font-medium transition-colors hover:border-primary",
+              ativo ? "border-primary bg-primary/5" : "border-line bg-surface")}>
             {o.rotulo}
-            {ativo && <Check className="size-5 text-primary" aria-hidden />}
+            {ativo && <Check className="size-5 shrink-0 text-primary" aria-hidden />}
           </button>
         );
       })}
@@ -245,13 +246,16 @@ function Vazio({ texto, onRetry }: { texto: string; onRetry: () => void }) {
   );
 }
 
-/** Indicador de carregamento da IA (RNF01): aneis orbitando um nucleo. So transform. */
+/** Indicador de carregamento da IA (RNF01): um anel girando. So transform. */
 function GeradorAnimado() {
   return (
-    <div className="relative grid size-20 place-items-center" aria-hidden>
-      <motion.span className="absolute inset-0 rounded-full border-2 border-primary/30" animate={{ scale: [1, 1.5], opacity: [0.8, 0] }} transition={{ duration: 1.6, repeat: Infinity }} />
-      <motion.span className="absolute inset-2 rounded-full border-2 border-t-primary border-transparent" animate={{ rotate: 360 }} transition={{ duration: 1.1, repeat: Infinity, ease: "linear" }} />
-      <Sparkles className="size-7 text-primary" />
+    <div className="relative grid size-14 place-items-center" aria-hidden>
+      <motion.span
+        className="absolute inset-0 rounded-full border-2 border-line border-t-primary"
+        animate={{ rotate: 360 }}
+        transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+      />
+      <Route className="size-5 text-primary" />
     </div>
   );
 }

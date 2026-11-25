@@ -28,16 +28,16 @@ export default async function ArtigoPage({ params }: Props) {
           <ArrowLeft className="size-4" aria-hidden /> Todos os artigos
         </Link>
         <p className="text-sm font-medium text-primary">{post.categoria}</p>
-        <h1 className="mt-2 font-display text-3xl font-semibold leading-tight tracking-tight sm:text-4xl">{post.titulo}</h1>
-        <p className="mt-4 flex items-center gap-3 text-sm text-muted">
+        <h1 className="mt-2 font-display text-3xl font-semibold leading-tight tracking-tight sm:text-5xl">{post.titulo}</h1>
+        <p className="mt-4 flex items-center gap-4 text-sm text-muted">
           <time dateTime={post.data}>{formataData(post.data)}</time>
           <span className="inline-flex items-center gap-1"><Clock className="size-3.5" aria-hidden /> {post.minutos} min de leitura</span>
         </p>
 
-        <div className="mt-10 space-y-5 text-[1.0625rem] leading-relaxed">
+        <div className="mt-10 space-y-5 text-[1.0625rem] leading-[1.75]">
           {post.conteudo.map((b, i) =>
             b.t === "h2" ? (
-              <h2 key={i} className="pt-4 font-display text-xl font-semibold tracking-tight">{b.texto}</h2>
+              <h2 key={i} className="pt-6 font-display text-2xl font-semibold tracking-tight">{b.texto}</h2>
             ) : b.t === "ul" ? (
               <ul key={i} className="list-disc space-y-2 pl-6 marker:text-primary">
                 {b.itens.map((it) => <li key={it}>{it}</li>)}
@@ -48,10 +48,10 @@ export default async function ArtigoPage({ params }: Props) {
           )}
         </div>
 
-        <div className="mt-14 rounded-[var(--radius-card)] border border-line bg-surface p-6">
-          <p className="font-display text-lg font-semibold">Quer um plano de estudo só seu?</p>
-          <p className="mt-1 text-sm text-muted">Responda o questionário e a IA monta uma trilha com o seu objetivo, nível e tempo disponível.</p>
-          <Link href="/cadastro" className="mt-4 inline-block rounded-xl bg-primary px-4 py-2.5 text-sm font-medium text-primary-fg transition-transform hover:-translate-y-0.5">
+        <div className="mt-14 border-t border-line pt-8">
+          <p className="font-display text-xl font-semibold">Quer um plano de estudo só seu?</p>
+          <p className="mt-1 max-w-lg text-muted">Responda o questionário e a IA monta uma trilha com o seu objetivo, nível e tempo disponível.</p>
+          <Link href="/cadastro" className="mt-4 inline-block rounded-[var(--radius-control)] bg-primary px-5 py-2.5 font-medium text-primary-fg transition-[filter] hover:brightness-110">
             Criar minha trilha
           </Link>
         </div>

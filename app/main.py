@@ -39,6 +39,7 @@ def _atualizar_schema_usuario_legado() -> None:
         "bairro": "VARCHAR(100)",
         "cidade": "VARCHAR(100)",
         "uf": "VARCHAR(2)",
+        "foto": "TEXT",
     }
     with engine.begin() as conn:
         for nome, tipo in colunas.items():

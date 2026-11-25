@@ -31,6 +31,8 @@ export const session = {
       return null;
     }
   },
+  /** Atualiza so os dados do usuario (nome/foto) mantendo o mesmo token. */
+  setUser: (u: UsuarioOut) => sessionStorage.setItem(USER_KEY, JSON.stringify(u)),
   save: (t: TokenOut) => {
     sessionStorage.setItem(TOKEN_KEY, t.access_token);
     sessionStorage.setItem(USER_KEY, JSON.stringify(t.usuario));
@@ -85,8 +87,9 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
 }
 
 /* ---------------- Tipos (app/schemas.py) ---------------- */
-/** `perfil` vem do back (coluna usuario.perfil): "master" ou "comum". Fica opcional por seguranca. */
-export type UsuarioOut = { id: number; nome: string; email: string; criado_em: string; perfil?: "master" | "comum" };
+/** `perfil` vem do back (coluna usuario.perfil): "master" ou "comum". Fica opcional por seguranca.
+ *  `foto` e um data URL guardado no banco (coluna usuario.foto); null/ausente = sem foto. */
+export type UsuarioOut = { id: number; nome: string; email: string; criado_em: string; perfil?: "master" | "comum"; foto?: string | null };
 export type LogEntry = { id: number; data_hora: string; nome: string; cpf?: string; fator_2fa: string };
 export type TokenOut = { access_token: string; token_type: string; usuario: UsuarioOut };
 export type UsuarioCreate = {
@@ -134,11 +137,18 @@ export const isUnavailable = (e: unknown) => e instanceof ApiError && [404, 405,
 
 const post = <T>(path: string, body: unknown) => request<T>(path, { method: "POST", body: JSON.stringify(body) });
 const patch = <T>(path: string, body: unknown) => request<T>(path, { method: "PATCH", body: JSON.stringify(body) });
+const put = <T>(path: string, body: unknown) => request<T>(path, { method: "PUT", body: JSON.stringify(body) });
 
 export const api = {
   auth: {
     cadastro: (b: UsuarioCreate) => post<UsuarioOut>("/auth/cadastro", b), // [?] caminho do README
     login: (b: LoginIn) => post<TokenOut>("/auth/login", b), //               [?] caminho do README
+    /** Recuperacao sem e-mail: e-mail + CPF da conta + nova senha. Responde 204. */
+    esqueciSenha: (b: { email: string; cpf: string; nova_senha: string }) => post<void>("/auth/esqueci-senha", b),
+    /** Perfil do proprio usuario: nome e foto (data URL JPEG/PNG/WebP). Todos devolvem o usuario atualizado. */
+    alterarNome: (nome: string) => patch<UsuarioOut>("/auth/perfil", { nome }),
+    trocarFoto: (foto: string) => put<UsuarioOut>("/auth/foto", { foto }),
+    removerFoto: () => request<UsuarioOut>("/auth/foto", { method: "DELETE" }),
   },
   /** [?] Nenhum destes existe nos schemas atuais; as telas tratam 404/405 como "indisponivel". */
   usuarios: {

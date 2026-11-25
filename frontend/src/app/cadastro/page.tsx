@@ -2,14 +2,12 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
-import { motion } from "motion/react";
 import { Eraser, Send } from "lucide-react";
 import { AuthShell } from "@/components/AuthShell";
 import { Button, Field, Select } from "@/components/ui";
 import { useToast } from "@/components/Toast";
 import { api } from "@/lib/api";
 import { saveTwoFA } from "@/lib/twofa";
-import { fadeUp } from "@/lib/motion";
 import * as v from "@/lib/validators";
 
 /**
@@ -20,7 +18,7 @@ import * as v from "@/lib/validators";
  * Os dados validados são enviados por HTTPS à API e persistidos no Supabase. Senha, CPF e
  * resposta de 2FA são guardados apenas como hashes no servidor.
  *
- * Layout: campos agrupados em secoes que aparecem conforme a rolagem (a 1a ja entra visivel).
+ * Layout: campos agrupados em secoes com titulo e filete, na ordem em que sao preenchidos.
  */
 const VAZIO = {
   nome: "", nascimento: "", sexo: "", mae: "", cpf: "", email: "", celular: "", fixo: "",
@@ -46,20 +44,13 @@ function validar(f: Form): Erros {
   return e;
 }
 
-/** Grupo de campos que surge ao entrar na tela (fade + subida), uma unica vez. */
-function Secao({ titulo, primeira, children }: { titulo: string; primeira?: boolean; children: React.ReactNode }) {
+/** Grupo de campos do cadastro, com ritmo visual sem alterar a ordem de preenchimento. */
+function Secao({ titulo, children }: { titulo: string; children: React.ReactNode }) {
   return (
-    <motion.div
-      role="group"
-      aria-label={titulo}
-      variants={fadeUp}
-      initial="hidden"
-      {...(primeira ? { animate: "show" } : { whileInView: "show", viewport: { once: true, margin: "0px 0px -15% 0px" } })}
-      className="grid gap-x-3 gap-y-3 sm:grid-cols-2"
-    >
-      <h2 className="text-[0.7rem] font-semibold uppercase tracking-widest text-muted sm:col-span-2">{titulo}</h2>
+    <div role="group" aria-label={titulo} className="cadastro-section grid gap-x-4 gap-y-4 sm:grid-cols-2">
+      <h2 className="cadastro-section-title sm:col-span-2">{titulo}</h2>
       {children}
-    </motion.div>
+    </div>
   );
 }
 
@@ -75,22 +66,40 @@ export default function CadastroPage() {
   const set = (k: keyof Form, mask?: (s: string) => string) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
     setF((p) => ({ ...p, [k]: mask ? mask(e.target.value) : e.target.value }));
 
-  /** Preenche o endereco pelo CEP. Se faltar conexao ou der erro, o usuario digita (regra 4 do PDF). */
-  async function buscaCep() {
-    if (!v.cepValido(f.cep)) return;
+  /** Preenche o endereco pelo CEP assim que ele chega a 8 digitos. Se falhar, o usuario digita (regra 4 do PDF). */
+  const ultimoCep = useRef("");
+  async function buscaCep(cep: string) {
+    const d = v.soDigitos(cep);
+    if (d.length !== 8 || d === ultimoCep.current) return;
+    ultimoCep.current = d; // evita buscar duas vezes o mesmo CEP (digitar + sair do campo)
     setCepBusy(true);
     try {
-      const r = await fetch(`https://viacep.com.br/ws/${v.soDigitos(f.cep)}/json/`);
-      const d = await r.json();
-      if (d.erro) throw new Error("nao encontrado");
-      setF((p) => ({ ...p, logradouro: d.logradouro ?? "", bairro: d.bairro ?? "", cidade: d.localidade ?? "", uf: d.uf ?? "" }));
+      const r = await fetch(`https://viacep.com.br/ws/${d}/json/`);
+      if (!r.ok) throw new Error("falha na consulta");
+      const dados = await r.json();
+      if (dados.erro) {
+        toast("CEP não encontrado. Confira o número ou preencha o endereço manualmente.", "warning");
+        return;
+      }
+      // So preenche se o CEP continua o mesmo (o usuario pode ter corrigido enquanto buscava).
+      setF((p) => v.soDigitos(p.cep) !== d ? p : ({
+        ...p, logradouro: dados.logradouro ?? "", bairro: dados.bairro ?? "", cidade: dados.localidade ?? "", uf: dados.uf ?? "",
+      }));
       numeroRef.current?.focus();
     } catch {
+      ultimoCep.current = ""; // permite tentar de novo
       toast("Não foi possível buscar o CEP. Preencha o endereço manualmente.", "warning");
     } finally {
       setCepBusy(false);
     }
   }
+
+  const aoDigitarCep = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const valor = v.maskCep(e.target.value);
+    setF((p) => ({ ...p, cep: valor }));
+    if (v.soDigitos(valor).length < 8) ultimoCep.current = ""; // CEP apagado/alterado: libera nova busca
+    void buscaCep(valor);
+  };
 
   async function enviar(ev: React.FormEvent) {
     ev.preventDefault();
@@ -118,8 +127,8 @@ export default function CadastroPage() {
   const E = (k: keyof Form) => erros[k];
   return (
     <AuthShell title="Criar conta" subtitle="Preencha seus dados para começar." wide>
-      <form onSubmit={enviar} noValidate className="space-y-7">
-        <Secao titulo="Dados pessoais" primeira>
+      <form onSubmit={enviar} noValidate className="space-y-10">
+        <Secao titulo="Dados pessoais">
           <Field className="sm:col-span-2" label="Nome completo" value={f.nome} onChange={set("nome")} error={E("nome")} autoComplete="name" />
           <Field label="Data de nascimento" type="date" value={f.nascimento} onChange={set("nascimento")} error={E("nascimento")} autoComplete="bday" />
           <Select label="Sexo" value={f.sexo} onChange={set("sexo")} error={E("sexo")}>
@@ -134,12 +143,12 @@ export default function CadastroPage() {
 
         <Secao titulo="Contato">
           <Field className="sm:col-span-2" label="E-mail (será o seu login)" type="email" value={f.email} onChange={set("email")} error={E("email")} autoComplete="email" />
-          <Field label="Telefone celular" inputMode="tel" value={f.celular} onChange={set("celular", v.maskTelefone)} error={E("celular")} placeholder="(+55)21-999999999" />
-          <Field label="Telefone fixo" inputMode="tel" value={f.fixo} onChange={set("fixo", v.maskTelefone)} error={E("fixo")} placeholder="(+55)21-22223333" />
+          <Field label="Telefone celular" type="tel" inputMode="tel" autoComplete="tel" maxLength={18} value={f.celular} onChange={set("celular", v.maskTelefone)} error={E("celular")} placeholder="(+55)21-999999999" />
+          <Field label="Telefone fixo" type="tel" inputMode="tel" autoComplete="tel-national" maxLength={18} value={f.fixo} onChange={set("fixo", v.maskTelefone)} error={E("fixo")} placeholder="(+55)21-22223333" />
         </Secao>
 
         <Secao titulo="Endereço">
-          <Field label="CEP" inputMode="numeric" value={f.cep} onChange={set("cep", v.maskCep)} onBlur={buscaCep} error={E("cep")}
+          <Field label="CEP" inputMode="numeric" value={f.cep} onChange={aoDigitarCep} onBlur={() => buscaCep(f.cep)} error={E("cep")}
             hint={cepBusy ? "Buscando endereço..." : undefined} placeholder="00000-000" />
           <Field label="Logradouro" value={f.logradouro} onChange={set("logradouro")} error={E("logradouro")} />
           <Field ref={numeroRef} label="Número" value={f.numero} onChange={set("numero")} error={E("numero")} />

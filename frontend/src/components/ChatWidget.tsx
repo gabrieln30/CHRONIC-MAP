@@ -9,7 +9,7 @@ import { Button } from "./ui";
 import { useToast } from "./Toast";
 import { api } from "@/lib/api";
 import { trilhaAtiva, useSession } from "@/lib/auth";
-import { spring } from "@/lib/motion";
+import { tFast } from "@/lib/motion";
 
 /**
  * Chatbot do site (IA 2, tutor): botao flutuante em todas as telas logadas.
@@ -63,17 +63,17 @@ export function ChatWidget() {
           <motion.section
             role="dialog"
             aria-label="Chat do tutor"
-            initial={{ opacity: 0, y: 24, scale: 0.96 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 16, scale: 0.97 }}
-            transition={spring}
-            className="fixed inset-x-3 bottom-24 z-40 flex h-[min(34rem,calc(100svh-8rem))] flex-col overflow-hidden rounded-[var(--radius-card)] border border-line bg-surface shadow-2xl shadow-brand-950/20 sm:inset-x-auto sm:right-6 sm:w-[24rem]"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={tFast}
+            className="fixed inset-x-3 bottom-24 z-40 flex h-[min(34rem,calc(100svh-8rem))] flex-col overflow-hidden rounded-[var(--radius-card)] border border-line bg-surface sm:inset-x-auto sm:right-6 sm:w-[24rem]"
           >
             <header className="flex items-center justify-between border-b border-line px-4 py-3">
               <p className="flex items-center gap-2 font-display font-semibold"><Bot className="size-4 text-primary" aria-hidden /> Tutor</p>
               <div className="flex">
-                <Link href="/tutor" aria-label="Abrir conversa completa" className="grid size-9 place-items-center rounded-lg hover:bg-surface-2"><Maximize2 className="size-4" aria-hidden /></Link>
-                <button onClick={() => setAberto(false)} aria-label="Fechar chat" className="grid size-9 place-items-center rounded-lg hover:bg-surface-2"><X className="size-4" aria-hidden /></button>
+                <Link href="/tutor" aria-label="Abrir conversa completa" className="grid size-9 place-items-center rounded-[var(--radius-control)] hover:bg-surface-2"><Maximize2 className="size-4" aria-hidden /></Link>
+                <button onClick={() => setAberto(false)} aria-label="Fechar chat" className="grid size-9 place-items-center rounded-[var(--radius-control)] hover:bg-surface-2"><X className="size-4" aria-hidden /></button>
               </div>
             </header>
 
@@ -84,7 +84,7 @@ export function ChatWidget() {
                   {msgs.map((m) => (
                     <div key={m.id} className={m.autor === "user" ? "flex justify-end" : "flex"}>
                       {m.autor === "user"
-                        ? <p className="max-w-[85%] whitespace-pre-wrap rounded-2xl rounded-br-md bg-primary px-3.5 py-2.5 text-sm text-primary-fg">{m.texto}</p>
+                        ? <p className="max-w-[85%] whitespace-pre-wrap rounded-[var(--radius-card)] rounded-br-sm bg-primary px-3.5 py-2.5 text-sm text-primary-fg">{m.texto}</p>
                         : <Resposta m={m} />}
                     </div>
                   ))}
@@ -94,7 +94,7 @@ export function ChatWidget() {
                 <form onSubmit={enviar} className="flex gap-2 border-t border-line p-2">
                   <label htmlFor="chat-widget" className="sr-only">Sua dúvida</label>
                   <input id="chat-widget" value={texto} onChange={(e) => setTexto(e.target.value)} maxLength={2000} placeholder="Digite sua dúvida..."
-                    className="min-w-0 flex-1 bg-transparent px-3 py-2 text-sm outline-none placeholder:text-muted/70" />
+                    className="min-w-0 flex-1 bg-transparent px-3 py-2 text-sm placeholder:text-muted/70" />
                   <Button type="submit" loading={enviando} disabled={texto.trim().length < 3} aria-label="Enviar" className="!px-3.5 !py-2.5"><Send className="size-4" aria-hidden /></Button>
                 </form>
               </>
@@ -112,7 +112,7 @@ export function ChatWidget() {
         onClick={() => setAberto((v) => !v)}
         aria-label={aberto ? "Fechar chat do tutor" : "Abrir chat do tutor"}
         aria-expanded={aberto}
-        className="fixed bottom-5 right-4 z-40 grid size-14 place-items-center rounded-full bg-primary text-primary-fg shadow-xl shadow-brand-700/30 transition-transform hover:-translate-y-0.5 sm:right-6"
+        className="fixed bottom-5 right-4 z-40 grid size-14 place-items-center rounded-[var(--radius-card)] bg-primary text-primary-fg hover:brightness-110 sm:right-6"
       >
         {aberto ? <X className="size-6" aria-hidden /> : <Bot className="size-6" aria-hidden />}
       </button>

@@ -26,8 +26,12 @@ export const senhaValida = (s: string) => s.length >= 8 && s.length <= 72;
 
 export const cepValido = (s: string) => soDigitos(s).length === 8;
 
-/** Telefone no formato (+55)XX-XXXXXXXX (8 digitos fixo ou 9 celular) - regra 5. */
-export const telefoneValido = (s: string) => /^\(\+55\)\d{2}-\d{8,9}$/.test(s);
+/** Telefone brasileiro com DDD, no formato exibido (+55)XX-XXXXXXXX(X). */
+export function telefoneValido(s: string): boolean {
+  const d = soDigitos(s);
+  const nacional = d.startsWith("55") && d.length >= 12 ? d.slice(2) : d;
+  return /^[1-9]\d{1}\d{8,9}$/.test(nacional);
+}
 
 export function dataNascimentoValida(iso: string): boolean {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(iso)) return false;
@@ -44,10 +48,12 @@ export const maskCpf = (v: string) =>
 
 export const maskCep = (v: string) => soDigitos(v).slice(0, 8).replace(/(\d{5})(\d)/, "$1-$2");
 
-/** (+55)21-999999999. Aceita colar com ou sem o 55. */
+/** (+55)21-999999999. Aceita digitação e colagem com ou sem o 55. */
 export function maskTelefone(v: string): string {
-  let d = soDigitos(v);
-  if (d.startsWith("55") && d.length > 11) d = d.slice(2);
+  const raw = soDigitos(v);
+  // O prefixo +55 já está no valor controlado após a primeira tecla; não o duplicar.
+  let d = raw;
+  if (raw.startsWith("55") && (v.includes("+55") || raw.length > 11)) d = raw.slice(2);
   d = d.slice(0, 11);
   if (!d) return "";
   return `(+55)${d.slice(0, 2)}${d.length > 2 ? `-${d.slice(2)}` : ""}`;

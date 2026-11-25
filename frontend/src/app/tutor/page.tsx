@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { Bot, Send, Wand2 } from "lucide-react";
+import { Send, Wand2 } from "lucide-react";
 import { AppPage } from "@/components/AppPage";
 import { Button, Card, Spinner } from "@/components/ui";
 import { useToast } from "@/components/Toast";
@@ -81,21 +81,23 @@ export default function TutorPage() {
         <div className="flex flex-col">
           <div className="min-h-[40vh] space-y-4 pb-6" aria-live="polite">
             {msgs.length === 0 && (
-              <Card className="text-center">
-                <Bot className="mx-auto size-8 text-primary" aria-hidden />
-                <p className="mt-3 font-medium">Pergunte qualquer coisa sobre a sua trilha.</p>
-                <div className="mt-5 flex flex-wrap justify-center gap-2">
+              <div className="max-w-2xl">
+                <p className="font-display text-xl font-semibold">Pergunte sobre a sua trilha.</p>
+                <p className="mt-1 text-muted">Ou comece por uma destas:</p>
+                <ul className="mt-4 divide-y divide-line border-y border-line">
                   {SUGESTOES.map((s) => (
-                    <button key={s} onClick={() => enviar(s)} className="rounded-full border border-line px-4 py-2 text-sm hover:border-primary">{s}</button>
+                    <li key={s}>
+                      <button onClick={() => enviar(s)} className="w-full px-1 py-3 text-left transition-colors hover:bg-surface-2 sm:px-3">{s}</button>
+                    </li>
                   ))}
-                </div>
-              </Card>
+                </ul>
+              </div>
             )}
             <AnimatePresence initial={false}>
               {msgs.map((m) => (
                 <motion.div key={m.id} variants={fadeUp} initial="hidden" animate="show" className={m.autor === "user" ? "flex justify-end" : "flex"}>
                   {m.autor === "user" ? (
-                    <p className="max-w-[85%] whitespace-pre-wrap rounded-2xl rounded-br-md bg-primary px-4 py-3 text-primary-fg">{m.texto}</p>
+                    <p className="max-w-[85%] whitespace-pre-wrap rounded-[var(--radius-card)] rounded-br-sm bg-primary px-4 py-3 text-primary-fg">{m.texto}</p>
                   ) : (
                     <Resposta m={m} />
                   )}
@@ -103,7 +105,7 @@ export default function TutorPage() {
               ))}
               {enviando && (
                 <motion.div key="typing" variants={fadeUp} initial="hidden" animate="show" className="flex" aria-label="O tutor está digitando">
-                  <div className="flex gap-1.5 rounded-2xl rounded-bl-md border border-line bg-surface px-4 py-4">
+                  <div className="flex gap-1.5 rounded-[var(--radius-card)] rounded-bl-sm border border-line bg-surface px-4 py-4">
                     {[0, 1, 2].map((i) => (
                       <motion.span key={i} className="size-2 rounded-full bg-muted" animate={{ y: [0, -4, 0] }} transition={{ duration: 0.7, repeat: Infinity, delay: i * 0.12 }} />
                     ))}
@@ -114,10 +116,10 @@ export default function TutorPage() {
             <div ref={fim} />
           </div>
 
-          <form onSubmit={(e) => { e.preventDefault(); enviar(texto); }} className="sticky bottom-4 flex gap-2 rounded-2xl border border-line bg-surface/90 p-2 shadow-xl backdrop-blur">
+          <form onSubmit={(e) => { e.preventDefault(); enviar(texto); }} className="sticky bottom-4 flex gap-2 rounded-[var(--radius-card)] border border-line bg-surface p-2">
             <label htmlFor="pergunta" className="sr-only">Sua dúvida</label>
             <input id="pergunta" value={texto} onChange={(e) => setTexto(e.target.value)} maxLength={2000} placeholder="Digite sua dúvida..."
-              className="min-w-0 flex-1 bg-transparent px-3 py-2 outline-none placeholder:text-muted/70" />
+              className="min-w-0 flex-1 bg-transparent px-3 py-2 placeholder:text-muted/70" />
             <Button type="submit" loading={enviando} disabled={texto.trim().length < 3} aria-label="Enviar"><Send className="size-4" aria-hidden /></Button>
           </form>
         </div>

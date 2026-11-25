@@ -1,10 +1,23 @@
-.env
+# Node.js
+node_modules/
+.next/
+out/
+npm-debug.log*
+
+# Python
 .venv/
-frontend/node_modules/
-frontend/.next/
+venv/
 __pycache__/
 *.pyc
-*.pyo
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# IDE
+.vscode/
+
+# Sistema
 .DS_Store
-mysql_data/
-.pytest_cache/
+Thumbs.db

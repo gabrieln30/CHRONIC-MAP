@@ -16,6 +16,11 @@ export function startSession(t: TokenOut) {
   session.save(t);
   emit();
 }
+/** Depois de trocar nome/foto: atualiza a sessao e avisa as telas (Navbar, perfil) sem novo login. */
+export function updateUser(u: UsuarioOut) {
+  session.setUser(u);
+  emit();
+}
 export function endSession() {
   session.clear();
   emit();

@@ -42,14 +42,23 @@ export default function LoginPage() {
       <form onSubmit={enviar} noValidate className="space-y-4">
         <Field label="E-mail" type="email" autoComplete="email" value={email} error={erros.email}
           onChange={(e) => setEmail(e.target.value)} placeholder="voce@exemplo.com" />
-        <div className="relative">
-          <Field label="Senha" type={ver ? "text" : "password"} autoComplete="current-password" value={senha}
-            error={erros.senha} onChange={(e) => setSenha(e.target.value)} />
-          <button type="button" onClick={() => setVer(!ver)} aria-label={ver ? "Ocultar senha" : "Mostrar senha"}
-            className="absolute right-3 top-[2.35rem] text-muted hover:text-fg">
-            {ver ? <EyeOff className="size-5" aria-hidden /> : <Eye className="size-5" aria-hidden />}
-          </button>
-        </div>
+        <Field
+          label="Senha"
+          type={ver ? "text" : "password"}
+          autoComplete="current-password"
+          value={senha}
+          error={erros.senha}
+          onChange={(e) => setSenha(e.target.value)}
+          right={
+            <button type="button" onClick={() => setVer(!ver)} aria-label={ver ? "Ocultar senha" : "Mostrar senha"}
+              className="grid size-9 place-items-center rounded-md text-muted hover:text-fg">
+              {ver ? <EyeOff className="size-5" aria-hidden /> : <Eye className="size-5" aria-hidden />}
+            </button>
+          }
+        />
+        <p className="text-right text-sm">
+          <Link href="/esqueci-senha" className="font-medium text-primary hover:underline">Esqueci a senha</Link>
+        </p>
         <div className="flex gap-3 pt-2">
           <Button type="submit" loading={loading} className="flex-1"><LogIn className="size-4" aria-hidden /> Entrar</Button>
           <Button type="button" variant="ghost" className="flex-1"

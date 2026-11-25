@@ -1,18 +1,17 @@
 "use client";
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { motion } from "motion/react";
 import { isMaster, useSession } from "@/lib/auth";
-import { fadeUp } from "@/lib/motion";
+import { cn } from "@/lib/cn";
 import { Spinner } from "./ui";
 
 /**
  * Casca das telas logadas: exige sessao (senao vai para /login), aplica o espacamento
- * sob a navbar e anima o titulo. `master` restringe a tela ao perfil master.
+ * sob a navbar e mostra o titulo com um filete embaixo. `master` restringe a tela ao perfil master.
  */
 export function AppPage({
-  title, subtitle, master, wide, children,
-}: { title: string; subtitle?: string; master?: boolean; wide?: boolean; children: React.ReactNode }) {
+  title, subtitle, master, wide, titleClassName, children,
+}: { title: string; subtitle?: string; master?: boolean; wide?: boolean; titleClassName?: string; children: React.ReactNode }) {
   const { user, ready } = useSession();
   const router = useRouter();
 
@@ -28,10 +27,10 @@ export function AppPage({
 
   return (
     <div className={`mx-auto px-4 pb-24 pt-28 sm:px-8 ${wide ? "max-w-6xl" : "max-w-4xl"}`}>
-      <motion.header variants={fadeUp} initial="hidden" animate="show" className="mb-10">
-        <h1 className="font-display text-3xl font-semibold tracking-tight sm:text-4xl">{title}</h1>
+      <header className="mb-10 border-b border-line pb-6">
+        <h1 className={cn("font-display text-3xl font-semibold tracking-tight sm:text-4xl", titleClassName)}>{title}</h1>
         {subtitle && <p className="mt-2 max-w-2xl text-muted">{subtitle}</p>}
-      </motion.header>
+      </header>
       {children}
     </div>
   );

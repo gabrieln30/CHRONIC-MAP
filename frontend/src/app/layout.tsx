@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from "next";
-import "@fontsource-variable/inter";
-import "@fontsource-variable/sora";
+import "@fontsource-variable/familjen-grotesk";
+import "@fontsource-variable/public-sans";
 import "./globals.css";
 import { Providers } from "@/components/Providers";
 import { Navbar } from "@/components/Navbar";

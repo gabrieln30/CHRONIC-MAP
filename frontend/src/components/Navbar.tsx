@@ -3,7 +3,8 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { ChevronDown, LogOut, Menu, ShieldCheck, UserRound, X } from "lucide-react";
+import { ChevronDown, LogOut, Menu, ShieldCheck, X } from "lucide-react";
+import { Avatar } from "./Avatar";
 import { Logo } from "./Logo";
 import { AccessibilityBar } from "./AccessibilityBar";
 import { cn } from "@/lib/cn";
@@ -82,14 +83,19 @@ export function Navbar() {
     router.push("/login");
   };
 
+  const ativo = (href: string) => path === href || (href !== "/" && path.startsWith(`${href}/`));
+  // A pagina atual ganha um filete amarelo embaixo ("voce esta aqui"), como a etapa atual da trilha.
   const linkCls = (href: string) =>
-    cn("text-sm font-medium transition-colors hover:text-fg", path === href || (href !== "/" && path.startsWith(`${href}/`)) ? "text-fg" : "text-muted");
+    cn(
+      "border-b-2 py-1 text-sm font-medium transition-colors hover:text-fg",
+      ativo(href) ? "border-marker text-fg" : "border-transparent text-muted",
+    );
 
   return (
     <header
       className={cn(
-        "fixed inset-x-0 top-0 z-40 transition-[background-color,border-color,backdrop-filter] duration-300",
-        scrolled || open ? "border-b border-line bg-bg/80 backdrop-blur-xl" : "border-b border-transparent",
+        "fixed inset-x-0 top-0 z-40 border-b transition-colors duration-200",
+        scrolled || open ? "border-line bg-bg" : "border-transparent",
       )}
     >
       <nav aria-label="Principal" className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-4 sm:px-8">
@@ -98,9 +104,9 @@ export function Navbar() {
           <span className="font-display text-lg font-semibold tracking-tight">Chronic Map</span>
         </Link>
 
-        <div className="hidden items-center gap-5 lg:flex">
+        <div className="hidden items-center gap-6 lg:flex">
           {links.map((l) => (
-            <Link key={l.href} href={l.href} className={linkCls(l.href)}>{l.label}</Link>
+            <Link key={l.href} href={l.href} className={linkCls(l.href)} aria-current={ativo(l.href) ? "page" : undefined}>{l.label}</Link>
           ))}
           <AccessibilityBar />
           {user ? (
@@ -111,10 +117,10 @@ export function Navbar() {
                 onClick={() => setConta((v) => !v)}
                 aria-haspopup="menu"
                 aria-expanded={conta}
-                className="flex max-w-44 items-center gap-2 rounded-xl border border-line bg-surface px-3 py-2 text-sm"
+                className="flex max-w-44 items-center gap-2 rounded-[var(--radius-control)] border border-line bg-surface px-3 py-2 text-sm hover:border-muted"
                 title={user.email}
               >
-                <UserRound className="size-4 shrink-0 text-primary" aria-hidden />
+                <Avatar nome={user.nome} foto={user.foto} className="size-6 text-[0.7rem]" />
                 <span className="truncate">{user.nome.split(" ")[0]}</span>
                 <ChevronDown className={cn("size-4 shrink-0 text-muted transition-transform", conta && "rotate-180")} aria-hidden />
               </button>
@@ -122,15 +128,15 @@ export function Navbar() {
                 {conta && (
                   <motion.div
                     role="menu"
-                    initial={{ opacity: 0, y: -6 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -6 }}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
                     transition={tFast}
-                    className="absolute right-0 top-full z-50 mt-2 w-60 rounded-2xl border border-line bg-surface p-2 shadow-xl"
+                    className="absolute right-0 top-full z-50 mt-2 w-60 rounded-[var(--radius-card)] border border-line bg-surface p-2"
                   >
                     <p className="truncate px-3 pb-2 pt-1 text-xs text-muted">{user.email}</p>
                     {contaItens(master).map((l) => (
-                      <Link key={l.href} href={l.href} role="menuitem" className="block rounded-lg px-3 py-2 text-sm hover:bg-surface-2">{l.label}</Link>
+                      <Link key={l.href} href={l.href} role="menuitem" className="block rounded-[var(--radius-control)] px-3 py-2 text-sm hover:bg-surface-2">{l.label}</Link>
                     ))}
                     {master && (
                       <>
@@ -138,7 +144,7 @@ export function Navbar() {
                           <ShieldCheck className="size-3.5" aria-hidden /> Administração
                         </p>
                         {ADMIN.map((l) => (
-                          <Link key={l.href} href={l.href} role="menuitem" className="block rounded-lg px-3 py-2 text-sm hover:bg-surface-2">{l.label}</Link>
+                          <Link key={l.href} href={l.href} role="menuitem" className="block rounded-[var(--radius-control)] px-3 py-2 text-sm hover:bg-surface-2">{l.label}</Link>
                         ))}
                       </>
                     )}
@@ -150,7 +156,7 @@ export function Navbar() {
               </AnimatePresence>
             </div>
           ) : (
-            <Link href="/cadastro" className="rounded-xl bg-primary px-4 py-2 text-sm font-medium text-primary-fg transition-transform hover:-translate-y-0.5">
+            <Link href="/cadastro" className="rounded-[var(--radius-control)] bg-primary px-4 py-2 text-sm font-medium text-primary-fg hover:brightness-110">
               Criar conta
             </Link>
           )}
@@ -158,7 +164,7 @@ export function Navbar() {
 
         <button
           type="button"
-          className="grid size-10 place-items-center rounded-lg lg:hidden"
+          className="grid size-10 place-items-center rounded-[var(--radius-control)] lg:hidden"
           onClick={() => setOpen((v) => !v)}
           aria-expanded={open}
           aria-controls="menu-mobile"
@@ -179,16 +185,21 @@ export function Navbar() {
             transition={tFast}
           >
             <div className="flex flex-col gap-1 px-4 py-4">
-              {user && <p className="px-3 pb-2 text-sm text-muted">Olá, {user.nome.split(" ")[0]} ({user.email})</p>}
+              {user && (
+                <p className="flex items-center gap-3 px-3 pb-2 text-sm text-muted">
+                  <Avatar nome={user.nome} foto={user.foto} className="size-8 text-xs" />
+                  <span className="min-w-0 truncate">Olá, {user.nome.split(" ")[0]} ({user.email})</span>
+                </p>
+              )}
               {[...links, ...(user ? contaItens(master) : []), ...(user && master ? ADMIN : [])].map((l) => (
-                <Link key={l.href} href={l.href} className="rounded-lg px-3 py-3 font-medium hover:bg-surface-2">{l.label}</Link>
+                <Link key={l.href} href={l.href} className="rounded-[var(--radius-control)] px-3 py-3 font-medium hover:bg-surface-2">{l.label}</Link>
               ))}
               {user ? (
-                <button onClick={sair} className="mt-2 flex items-center justify-center gap-2 rounded-xl border border-line px-4 py-3 font-medium">
+                <button onClick={sair} className="mt-2 flex items-center justify-center gap-2 rounded-[var(--radius-control)] border border-line px-4 py-3 font-medium">
                   <LogOut className="size-4" aria-hidden /> Sair
                 </button>
               ) : (
-                <Link href="/cadastro" className="mt-2 rounded-xl bg-primary px-4 py-3 text-center font-medium text-primary-fg">Criar conta</Link>
+                <Link href="/cadastro" className="mt-2 rounded-[var(--radius-control)] bg-primary px-4 py-3 text-center font-medium text-primary-fg">Criar conta</Link>
               )}
               <AccessibilityBar className="mt-3 justify-center" />
             </div>

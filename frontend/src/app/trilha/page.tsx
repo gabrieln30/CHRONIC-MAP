@@ -9,10 +9,11 @@ import { useToast } from "@/components/Toast";
 import { api, ApiError, type Etapa, type ProgressoOut, type TrilhaOut } from "@/lib/api";
 import { trilhaAtiva, useSession } from "@/lib/auth";
 import { cn } from "@/lib/cn";
-import { fadeUp, stagger, viewportOnce } from "@/lib/motion";
 
 /**
  * Minha trilha = mapa das etapas + progresso (substitui "mapas" e "progresso" do front antigo).
+ * As etapas sao uma sequencia real, entao ficam numeradas ao longo de uma linha: etapas feitas em
+ * azul, a etapa atual em amarelo ("voce esta aqui") e as proximas em cinza.
  * [?] O formato de `exercicios_concluidos` (list[str]) nao esta documentado: `feito()` aceita
  * "etapa:indice", "etapa-indice", "etapa.indice" e "etapa_indice". Confirme em /docs.
  */
@@ -76,43 +77,47 @@ export default function TrilhaPage() {
         </Card>
       ) : !trilha ? <Spinner label="Carregando trilha" /> : (
         <>
-          <Card className="mb-10">
+          <div className="mb-10 max-w-3xl">
             <div className="flex items-center justify-between text-sm font-medium">
               <span>Progresso</span><span>{pct}%</span>
             </div>
-            <div className="mt-3 h-2 overflow-hidden rounded-full bg-surface-2" role="progressbar" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100}>
-              <motion.div className="h-full rounded-full bg-primary" initial={{ width: 0 }} animate={{ width: `${pct}%` }} transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }} />
+            <div className="mt-2 h-2 overflow-hidden rounded-full bg-surface-2" role="progressbar" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100} aria-label="Progresso da trilha">
+              <motion.div className="h-full rounded-full bg-primary" initial={{ width: 0 }} animate={{ width: `${pct}%` }} transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }} />
             </div>
-          </Card>
+          </div>
 
-          {/* Mapa: linha vertical com nos; a linha "desenha" ao entrar na tela */}
-          <motion.ol variants={stagger} initial="hidden" whileInView="show" viewport={viewportOnce} className="relative space-y-4 pl-10">
-            <motion.span aria-hidden className="absolute bottom-4 left-[15px] top-4 w-0.5 origin-top bg-line"
-              initial={{ scaleY: 0 }} whileInView={{ scaleY: 1 }} viewport={viewportOnce} transition={{ duration: 1.2, ease: "easeOut" }} />
+          {/* Mapa: linha vertical com um no por etapa */}
+          <ol className="max-w-3xl">
             {etapas.map((et, e) => {
               const ok = e < atual, ativa = e === atual, open = aberta === e;
               return (
-                <motion.li key={e} variants={fadeUp} className="relative">
-                  <span aria-hidden className={cn("absolute -left-10 top-5 grid size-8 place-items-center rounded-full border-2 text-xs font-bold",
-                    ok ? "border-ok bg-ok text-white" : ativa ? "border-primary bg-primary text-primary-fg" : "border-line bg-surface text-muted")}>
+                <li key={e} className="relative pl-14">
+                  <span aria-hidden className={cn("absolute left-0 top-3.5 z-10 grid size-9 place-items-center rounded-full border-2 text-sm font-semibold",
+                    ok ? "border-primary bg-primary text-primary-fg" : ativa ? "border-marker bg-marker text-ink-950" : "border-line bg-bg text-muted")}>
                     {ok ? <Check className="size-4" /> : e + 1}
                   </span>
-                  <Card className={cn("p-0", ativa && "border-primary/60")}>
-                    <button className="flex w-full items-center justify-between gap-3 p-5 text-left" aria-expanded={open}
+                  {e < etapas.length - 1 && (
+                    <span aria-hidden className={cn("absolute bottom-0 left-[17px] top-[3.25rem] w-0.5", ok ? "bg-primary" : "bg-line")} />
+                  )}
+                  <div className="border-b border-line pb-1">
+                    <button className="flex w-full items-center justify-between gap-3 py-4 text-left" aria-expanded={open}
                       onClick={() => setAberta(open ? -1 : e)}>
-                      <span className="font-display text-lg font-semibold">{et.titulo}</span>
+                      <span className="font-display text-lg font-semibold">
+                        {et.titulo}
+                        {ativa && <span className="ml-3 align-middle text-sm font-medium text-muted">Etapa atual</span>}
+                      </span>
                       <ChevronRight className={cn("size-5 shrink-0 text-muted transition-transform", open && "rotate-90")} aria-hidden />
                     </button>
                     {open && (
-                      <div className="border-t border-line p-5">
-                        <p className="text-muted">{et.descricao}</p>
+                      <div className="pb-6">
+                        <p className="max-w-2xl text-muted">{et.descricao}</p>
                         {et.exercicios.length > 0 && (
-                          <ul className="mt-4 space-y-2">
+                          <ul className="mt-4 space-y-1">
                             {et.exercicios.map((ex, i) => {
                               const d = feito(prog, e, i);
                               return (
                                 <li key={i}>
-                                  <label className={cn("flex cursor-pointer items-start gap-3 rounded-lg p-2 hover:bg-surface-2", d && "opacity-70")}>
+                                  <label className={cn("flex cursor-pointer items-start gap-3 rounded-[var(--radius-control)] p-2 hover:bg-surface-2", d && "opacity-70")}>
                                     <input type="checkbox" checked={d} disabled={busy || d} onChange={() => marcar(e, i)} className="mt-1 size-4 accent-[var(--primary)]" />
                                     <span className={d ? "line-through" : ""}>{ex}</span>
                                   </label>
@@ -125,11 +130,11 @@ export default function TrilhaPage() {
                         {ativa && <Button className="mt-5" loading={busy} onClick={() => concluir(e)}>Concluir etapa</Button>}
                       </div>
                     )}
-                  </Card>
-                </motion.li>
+                  </div>
+                </li>
               );
             })}
-          </motion.ol>
+          </ol>
         </>
       )}
     </AppPage>

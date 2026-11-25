@@ -90,6 +90,7 @@ class UsuarioOut(_Out):
     email: str
     criado_em: datetime
     perfil: str = "comum"
+    foto: Optional[str] = None
 
 
 class UsuarioListaOut(_Out):
@@ -103,6 +104,44 @@ class UsuarioListaOut(_Out):
 
 class PerfilUpdate(BaseModel):
     perfil: Literal["comum", "master"]
+
+
+class NomeUpdate(BaseModel):
+    """Troca do próprio nome (o e-mail não muda)."""
+    nome: str = Field(min_length=2, max_length=100)
+
+    @field_validator("nome")
+    @classmethod
+    def _nome_limpo(cls, v: str) -> str:
+        v = " ".join(v.split())
+        if len(v) < 2:
+            raise ValueError("Informe um nome com pelo menos 2 caracteres.")
+        return v
+
+
+class FotoUpdate(BaseModel):
+    """Foto como data URL. O formato e o tamanho são conferidos na rota, com mensagem em português."""
+    foto: str
+
+
+class SenhaEsquecidaIn(BaseModel):
+    """Recuperação sem e-mail: quem sabe o e-mail E o CPF da conta define uma nova senha."""
+    email: str = Field(max_length=150)
+    cpf: str = Field(min_length=11, max_length=14)
+    nova_senha: str = Field(min_length=8, max_length=72)
+
+    @field_validator("email")
+    @classmethod
+    def _email_minusculo(cls, v: str) -> str:
+        return v.strip().lower()
+
+    @field_validator("cpf")
+    @classmethod
+    def _cpf_limpo(cls, v: str) -> str:
+        digitos = re.sub(r"\D", "", v)
+        if len(digitos) != 11:
+            raise ValueError("CPF inválido")
+        return digitos
 
 
 class LogOut(_Out):

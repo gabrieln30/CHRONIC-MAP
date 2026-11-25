@@ -1,11 +1,9 @@
-"use client";
-import { motion } from "motion/react";
 import { AppPage } from "@/components/AppPage";
-import { EASE } from "@/lib/motion";
 
 /**
  * Modelo do BD (PDF: "uma imagem com a modelagem do banco"). Diagrama SVG gerado a partir do MER
  * do README e dos schemas do back; acompanha tema e contraste. Mudou o modelo? Edite ENTIDADES/LIGACOES.
+ * Sem animacao de entrada: o diagrama e material de consulta e aparece inteiro de uma vez.
  */
 type Campo = { n: string; k?: "PK" | "FK" };
 type Ent = { nome: string; x: number; y: number; campos: Campo[] };
@@ -13,6 +11,7 @@ type Ent = { nome: string; x: number; y: number; campos: Campo[] };
 const W = 210;
 const HEAD = 34;
 const ROW = 22;
+const R = 6; // raio dos cantos, igual ao dos controles do site
 
 const ENTIDADES: Ent[] = [
   { nome: "Usuario", x: 30, y: 30, campos: [{ n: "id", k: "PK" }, { n: "nome" }, { n: "email" }, { n: "senha_hash" }, { n: "criado_em" }] },
@@ -42,19 +41,19 @@ export default function ModeloBdPage() {
         <svg viewBox="0 0 930 640" className="mx-auto h-auto w-full min-w-[720px]" role="img"
           aria-label="Diagrama entidade-relacionamento: Usuario, Diagnostico, Trilha, Progresso, Duvida, AreaMacro e AreaMicro">
           {LIGACOES.map((l, i) => (
-            <motion.g key={i} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 + i * 0.05, duration: 0.6, ease: EASE }}>
+            <g key={i}>
               <path d={l.d} fill="none" className="stroke-muted" strokeWidth="1.5" />
               {[l.a, l.b].map(([x, y, t], j) => (
                 <text key={j} x={x} y={y} className="fill-primary" fontSize="13" fontWeight="600">{t}</text>
               ))}
-            </motion.g>
+            </g>
           ))}
-          {ENTIDADES.map((e, i) => {
+          {ENTIDADES.map((e) => {
             const h = HEAD + e.campos.length * ROW + 8;
             return (
-              <motion.g key={e.nome} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.06, duration: 0.6, ease: EASE }}>
-                <rect x={e.x} y={e.y} width={W} height={h} rx="12" className="fill-surface stroke-line" strokeWidth="1.5" />
-                <path d={`M${e.x} ${e.y + 12} a12 12 0 0 1 12 -12 h${W - 24} a12 12 0 0 1 12 12 v${HEAD - 12} h-${W} z`} className="fill-primary" />
+              <g key={e.nome}>
+                <rect x={e.x} y={e.y} width={W} height={h} rx={R} className="fill-surface stroke-line" strokeWidth="1.5" />
+                <path d={`M${e.x} ${e.y + R} a${R} ${R} 0 0 1 ${R} -${R} h${W - 2 * R} a${R} ${R} 0 0 1 ${R} ${R} v${HEAD - R} h-${W} z`} className="fill-primary" />
                 <text x={e.x + 14} y={e.y + 22} className="fill-primary-fg" fontSize="14" fontWeight="700">{e.nome}</text>
                 {e.campos.map((c, j) => (
                   <g key={c.n}>
@@ -62,7 +61,7 @@ export default function ModeloBdPage() {
                     {c.k && <text x={e.x + W - 14} y={e.y + HEAD + 18 + j * ROW} textAnchor="end" className="fill-muted" fontSize="10" fontWeight="600">{c.k}</text>}
                   </g>
                 ))}
-              </motion.g>
+              </g>
             );
           })}
         </svg>

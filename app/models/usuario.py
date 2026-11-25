@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Date, DateTime, Integer, String
+from sqlalchemy import Column, Date, DateTime, Integer, String, Text
 from sqlalchemy.orm import relationship
 
 from app.database import Base, utcnow
@@ -27,6 +27,8 @@ class Usuario(Base):
     cidade        = Column(String(100), nullable=True)
     uf            = Column(String(2), nullable=True)
     criado_em  = Column(DateTime, nullable=False, default=utcnow)
+    # Foto de perfil: data URL (JPEG/PNG/WebP, já reduzida pelo front). Fica no banco; NULL = sem foto.
+    foto       = Column(Text, nullable=True)
 
     diagnosticos = relationship("Diagnostico", back_populates="usuario", cascade="all, delete")
     progressos   = relationship("Progresso",   back_populates="usuario", cascade="all, delete")

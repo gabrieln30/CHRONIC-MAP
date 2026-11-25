@@ -2,7 +2,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight, FileDown, Search, ShieldCheck, ShieldOff, Trash2, Users } from "lucide-react";
 import { AppPage } from "@/components/AppPage";
-import { Button, Field, Modal, Notice, Spinner } from "@/components/ui";
+import { Button, Field, Modal, Notice, Select, Spinner } from "@/components/ui";
 import { useToast } from "@/components/Toast";
 import { api, isUnavailable, type UsuarioOut } from "@/lib/api";
 import { useSession } from "@/lib/auth";
@@ -138,18 +138,11 @@ export default function UsuariosPage() {
           <Search className="pointer-events-none absolute bottom-3.5 left-4 size-4 text-muted" aria-hidden />
           <Field label="Buscar por nome" value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="Digite parte do nome" className="[&_input]:pl-11" />
         </div>
-        <label className="flex flex-col gap-1.5 text-sm font-medium">
-          Ordenar por
-          <select
-            value={ordem}
-            onChange={(e) => setOrdem(e.target.value as Ordem)}
-            className="h-12 rounded-lg border border-line bg-surface px-3 text-base font-normal"
-          >
-            <option value="recentes">Mais recentes</option>
-            <option value="antigos">Mais antigos</option>
-            <option value="nome">Nome (A-Z)</option>
-          </select>
-        </label>
+        <Select label="Ordenar por" value={ordem} onChange={(e) => setOrdem(e.target.value as Ordem)} className="sm:w-48">
+          <option value="recentes">Mais recentes</option>
+          <option value="antigos">Mais antigos</option>
+          <option value="nome">Nome (A-Z)</option>
+        </Select>
         <Button variant="ghost" onClick={baixarPdf} disabled={!ordenada.length}><FileDown className="size-4" aria-hidden /> Baixar PDF</Button>
       </div>
 
@@ -179,14 +172,14 @@ export default function UsuariosPage() {
                   const sou = u.id === eu?.id;
                   return (
                     <li key={u.id} className="flex items-center gap-4 px-5 py-4">
-                      <span aria-hidden className="grid size-10 shrink-0 place-items-center rounded-full bg-primary font-display text-sm font-semibold text-primary-fg">
+                      <span aria-hidden className="grid size-10 shrink-0 place-items-center rounded-[var(--radius-control)] bg-primary font-display text-sm font-semibold text-primary-fg">
                         {iniciais(u.nome)}
                       </span>
                       <div className="min-w-0 flex-1">
                         <p className="flex items-center gap-2 font-medium">
                           <span className="truncate">{u.nome}</span>
                           {ehMaster && (
-                            <span className="shrink-0 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">Master</span>
+                            <span className="shrink-0 rounded-[4px] bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">Master</span>
                           )}
                           {sou && <span className="shrink-0 text-xs font-normal text-muted">(você)</span>}
                         </p>

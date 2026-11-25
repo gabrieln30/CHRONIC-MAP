@@ -3,8 +3,9 @@ import { createContext, useCallback, useContext, useRef, useState } from "react"
 import { AnimatePresence, motion } from "motion/react";
 import { AlertTriangle, CheckCircle2, Info, X, XCircle } from "lucide-react";
 import { cn } from "@/lib/cn";
+import { tFast } from "@/lib/motion";
 
-/** Feedback elegante (PDF: sem alert()). Mesma identidade visual em todas as telas. */
+/** Feedback (PDF: sem alert()). Faixa lateral colorida por tipo; sem sombra. Aparece por resposta a uma acao. */
 type Kind = "success" | "error" | "warning" | "info";
 type Item = { id: number; kind: Kind; text: string };
 
@@ -17,6 +18,12 @@ const TONE = {
   error: "text-danger",
   warning: "text-warn",
   info: "text-primary",
+};
+const FAIXA = {
+  success: "border-l-ok",
+  error: "border-l-danger",
+  warning: "border-l-warn",
+  info: "border-l-primary",
 };
 
 export function ToastProvider({ children }: { children: React.ReactNode }) {
@@ -48,10 +55,14 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
               <motion.div
                 key={t.id}
                 layout
-                initial={{ opacity: 0, y: 16, scale: 0.96 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, x: 24 }}
-                className="pointer-events-auto flex w-full max-w-sm items-start gap-3 rounded-xl border border-line bg-surface p-4 shadow-xl shadow-brand-950/10"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={tFast}
+                className={cn(
+                  "pointer-events-auto flex w-full max-w-sm items-start gap-3 rounded-[var(--radius-control)] border border-l-4 border-line bg-surface p-4",
+                  FAIXA[t.kind],
+                )}
               >
                 <Icon className={cn("mt-0.5 size-5 shrink-0", TONE[t.kind])} aria-hidden />
                 <p className="flex-1 text-sm">{t.text}</p>

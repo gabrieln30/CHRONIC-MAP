@@ -14,9 +14,9 @@ export default function BlogPage() {
   return (
     <>
       <div className="mx-auto max-w-6xl px-4 pb-24 pt-28 sm:px-8">
-        <header className="mb-10 max-w-2xl">
+        <header className="mb-10 border-b border-line pb-6">
           <h1 className="font-display text-3xl font-semibold tracking-tight sm:text-4xl">Blog</h1>
-          <p className="mt-2 text-muted">Dicas de estudo para você aprender melhor, com menos esforço e mais constância.</p>
+          <p className="mt-2 max-w-2xl text-muted">Dicas de estudo para você aprender melhor, com menos esforço e mais constância.</p>
         </header>
         <BlogLista posts={posts} />
       </div>

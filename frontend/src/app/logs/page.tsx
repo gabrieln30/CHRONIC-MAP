@@ -9,7 +9,7 @@ import { api, isUnavailable, type LogOut } from "@/lib/api";
 /**
  * Logs de autenticacao (PDF, so master): filtro por nome, CPF ou todos; colunas dia/hora, nome e
  * segundo fator; mais recentes primeiro.
- * [?] O back NAO tem GET /logs (e nao registra o 2FA): a tela avisa em vez de quebrar.
+ * Rota do back: GET /logs?campo=&q= (so master). Se responder 404/405, a tela avisa em vez de quebrar.
  */
 export default function LogsPage() {
   const toast = useToast();
@@ -63,15 +63,19 @@ export default function LogsPage() {
           logs.length === 0 ? <p className="py-12 text-center text-muted">Nenhum registro encontrado.</p> : (
             <div className="overflow-x-auto rounded-[var(--radius-card)] border border-line bg-surface">
               <table className="w-full min-w-[480px] text-left text-sm">
-                <thead className="border-b border-line text-muted">
-                  <tr><th className="px-5 py-3 font-medium">Dia e hora</th><th className="px-5 py-3 font-medium">Nome</th><th className="px-5 py-3 font-medium">Segundo fator</th></tr>
+                <thead className="border-b border-line bg-surface-2">
+                  <tr>
+                    <th scope="col" className="px-5 py-3 font-semibold">Dia e hora</th>
+                    <th scope="col" className="px-5 py-3 font-semibold">Nome</th>
+                    <th scope="col" className="px-5 py-3 font-semibold">Segundo fator</th>
+                  </tr>
                 </thead>
                 <tbody className="divide-y divide-line">
                   {logs.map((l, i) => (
                     <tr key={l.id ?? i}>
-                      <td className="px-5 py-3">{new Date(l.criado_em).toLocaleString("pt-BR")}</td>
+                      <td className="px-5 py-3 tabular-nums">{new Date(l.criado_em).toLocaleString("pt-BR")}</td>
                       <td className="px-5 py-3">{l.nome}</td>
-                      <td className="px-5 py-3">{l.segundo_fator ?? "-"}</td>
+                      <td className="px-5 py-3 text-muted">{l.segundo_fator ?? "-"}</td>
                     </tr>
                   ))}
                 </tbody>

@@ -10,10 +10,10 @@ import { fadeUp, stagger } from "@/lib/motion";
  * Painel de entrada. Mobile: globo atras do texto, mais suave (leitura primeiro).
  * Desktop: texto a esquerda e globo a direita. Orquestracao: titulo -> subtitulo -> CTAs.
  */
+
 export function Hero() {
   return (
     <section className="relative isolate flex min-h-[100svh] items-center overflow-hidden pt-16">
-      {/* Brilho de fundo: gradiente radial barato (sem blur filter) */}
       <div
         aria-hidden
         className="absolute inset-0 -z-20"
@@ -34,7 +34,6 @@ export function Hero() {
         initial="hidden"
         animate="show"
       >
-
         <WordReveal
           text="Seu mapa para aprender qualquer área"
           delay={0.2}
